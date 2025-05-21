@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Dict, Any
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, BackgroundTasks, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -9,6 +9,7 @@ from app.schemas.movie import Movie as MovieSchema, MovieCreate, MovieUpdate
 from app.api.deps import get_current_active_user, get_current_active_superuser
 from app.services.s3 import upload_file_to_s3, delete_file_from_s3
 from app.services.mediaconvert import create_hls_job, get_job_status
+from app.services.movie_api import search_movie, get_movie_details
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -302,3 +303,32 @@ async def get_transcoding_status(
         "is_transcoded": movie.is_transcoded,
         "streaming_url": movie.streaming_url if movie.is_transcoded else None
     }
+
+@router.get("/search-movies")
+async def search_movies(
+    *,
+    title: str = Query(..., description="Movie title to search for"),
+    current_user = Depends(get_current_active_superuser),
+):
+    """
+    Search for movies by title using external API.
+    """
+    results = search_movie(title)
+    return {"results": results}
+
+@router.get("/movie-details/{tmdb_id}")
+async def fetch_movie_details(
+    *,
+    tmdb_id: int,
+    current_user = Depends(get_current_active_superuser),
+):
+    """
+    Get detailed information about a movie by its TMDB ID.
+    """
+    movie_details = get_movie_details(tmdb_id)
+    if not movie_details:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Movie details not found",
+        )
+    return movie_details

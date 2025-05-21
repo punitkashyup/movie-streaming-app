@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { movieService } from '../services/api';
+import MovieSearchModal from '../components/MovieSearchModal';
 
 const MovieForm = () => {
   const { id } = useParams();
@@ -28,6 +29,7 @@ const MovieForm = () => {
   const [posterUploadProgress, setPosterUploadProgress] = useState(0);
   const [videoUploadProgress, setVideoUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   useEffect(() => {
     if (isEditMode) {
@@ -64,6 +66,21 @@ const MovieForm = () => {
 
   const handleVideoChange = (e) => {
     setVideoFile(e.target.files[0]);
+  };
+
+  const handleMovieSelect = (movieDetails) => {
+    setFormData({
+      ...formData,
+      title: movieDetails.title,
+      description: movieDetails.description,
+      release_year: movieDetails.release_year,
+      duration: movieDetails.duration,
+      genre: movieDetails.genre,
+      director: movieDetails.director,
+      cast: movieDetails.cast,
+      poster_url: movieDetails.poster_url,
+      rating: movieDetails.rating
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -159,8 +176,29 @@ const MovieForm = () => {
     <div className="movie-form-container">
       <h1>{isEditMode ? 'Edit Movie' : 'Add New Movie'}</h1>
 
+      {!isEditMode && (
+        <div className="auto-fetch-container">
+          <button
+            type="button"
+            className="btn-secondary fetch-movie-btn"
+            onClick={() => setIsSearchModalOpen(true)}
+          >
+            Search for Movie Details
+          </button>
+          <p className="helper-text">
+            Click to search for a movie and automatically fill in details
+          </p>
+        </div>
+      )}
+
       {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}
+
+      <MovieSearchModal
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+        onSelectMovie={handleMovieSelect}
+      />
 
       <form onSubmit={handleSubmit} className="movie-form">
         <div className="form-group">

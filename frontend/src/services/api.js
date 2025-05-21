@@ -462,6 +462,64 @@ export const movieService = {
     });
   },
 
+  // Movie API search and details
+  searchMovieAPI: async (title) => {
+    if (USE_MOCK_DATA) {
+      // Mock movie search results
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            data: {
+              results: [
+                {
+                  tmdb_id: 1,
+                  title: `${title} - The Movie`,
+                  release_year: 2023,
+                  poster_path: "https://via.placeholder.com/300x450",
+                  overview: "This is a mock movie description for testing purposes.",
+                  vote_average: 7.5
+                },
+                {
+                  tmdb_id: 2,
+                  title: `${title} 2: The Sequel`,
+                  release_year: 2021,
+                  poster_path: "https://via.placeholder.com/300x450",
+                  overview: "The exciting sequel to the original movie.",
+                  vote_average: 6.8
+                }
+              ]
+            }
+          });
+        }, 500);
+      });
+    }
+    return api.get('/search-movies', { params: { title } });
+  },
+
+  getMovieDetails: async (tmdbId) => {
+    if (USE_MOCK_DATA) {
+      // Mock movie details
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            data: {
+              title: `Movie ${tmdbId}`,
+              description: "This is a mock movie description for testing purposes.",
+              release_year: 2023,
+              duration: 120,
+              genre: "Action, Adventure",
+              director: "John Director",
+              cast: "Actor One, Actor Two, Actor Three",
+              poster_url: "https://via.placeholder.com/300x450",
+              rating: 7.5
+            }
+          });
+        }, 500);
+      });
+    }
+    return api.get(`/movie-details/${tmdbId}`);
+  },
+
   uploadMovieVideo: async (id, formData, onUploadProgress) => {
     if (USE_MOCK_DATA) {
       // Simulate video upload
