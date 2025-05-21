@@ -421,16 +421,16 @@ footer .copyright {
   transform: scale(1.1);
 }
 
-.video-container {
+.movie-video-wrapper {
   width: 100%;
-  aspect-ratio: 16/9;
   background-color: #000;
   position: relative;
+  margin-bottom: 20px;
 }
 
 .transcoding-status {
   position: absolute;
-  bottom: 0;
+  top: 0;
   left: 0;
   right: 0;
   background-color: rgba(0, 0, 0, 0.8);
@@ -438,6 +438,7 @@ footer .copyright {
   padding: 10px;
   font-size: 14px;
   text-align: center;
+  z-index: 5;
 }
 
 .transcoding-progress {
@@ -448,7 +449,7 @@ footer .copyright {
 
 .transcoding-error {
   position: absolute;
-  bottom: 0;
+  top: 0;
   left: 0;
   right: 0;
   background-color: rgba(239, 68, 68, 0.8);
@@ -456,6 +457,7 @@ footer .copyright {
   padding: 10px;
   font-size: 14px;
   text-align: center;
+  z-index: 5;
 }
 
 .movie-details-content {

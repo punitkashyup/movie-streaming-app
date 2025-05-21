@@ -88,7 +88,7 @@ const MovieDetails = () => {
     <div className="movie-details">
       <div className="movie-details-card">
         {isPlaying ? (
-          <div className="video-container">
+          <div className="movie-video-wrapper">
             <VideoPlayer
               videoUrl={
                 // Use streaming URL if available and transcoded, otherwise use original video

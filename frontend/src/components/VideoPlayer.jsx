@@ -247,7 +247,7 @@ const VideoPlayer = ({ videoUrl, posterUrl, title }) => {
         )}
       </div>
 
-      {title && <h3 className="video-title">{title}</h3>}
+      {/* Title is now handled by the MovieDetails component */}
     </div>
   );
 };
