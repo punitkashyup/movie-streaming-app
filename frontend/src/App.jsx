@@ -11,12 +11,17 @@ import Register from './pages/Register'
 import Profile from './pages/Profile'
 import SubscriptionPlans from './pages/SubscriptionPlans'
 import NotFound from './pages/NotFound'
+import PaymentPage from './pages/PaymentPage'
+import PaymentSuccess from './pages/PaymentSuccess'
+import PaymentFailure from './pages/PaymentFailure'
+import PaymentReceipt from './pages/PaymentReceipt'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminSubscriptions from './pages/AdminSubscriptions'
 import AdminSubscriptionPlans from './pages/AdminSubscriptionPlans'
 import AdminUsers from './pages/AdminUsers'
+import AdminPayments from './pages/AdminPayments'
 import MovieForm from './pages/MovieForm'
 import './index.css'
 import './App.css'
@@ -37,6 +42,24 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/subscriptions" element={<SubscriptionPlans />} />
+                <Route
+                  path="/payment/:planId"
+                  element={
+                    <ProtectedRoute>
+                      <PaymentPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/payment/success" element={<PaymentSuccess />} />
+                <Route path="/payment/failure" element={<PaymentFailure />} />
+                <Route
+                  path="/payment/:paymentId/receipt"
+                  element={
+                    <ProtectedRoute>
+                      <PaymentReceipt />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/profile"
                   element={
@@ -91,6 +114,14 @@ function App() {
                   element={
                     <AdminRoute>
                       <AdminUsers />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/payments"
+                  element={
+                    <AdminRoute>
+                      <AdminPayments />
                     </AdminRoute>
                   }
                 />

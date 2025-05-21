@@ -17,3 +17,6 @@ class User(Base):
 
     # Relationship with subscriptions - using string reference to avoid circular imports
     subscriptions = relationship("app.models.subscription.Subscription", back_populates="user", cascade="all, delete-orphan")
+
+    # Relationship with payments
+    payments = relationship("app.models.payment.Payment", back_populates="user", cascade="all, delete-orphan")

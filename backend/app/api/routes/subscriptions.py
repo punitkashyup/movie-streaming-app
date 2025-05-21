@@ -1,5 +1,6 @@
 from typing import List
 from datetime import timedelta
+import re
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -138,10 +139,11 @@ async def get_my_subscription(
     """
     Get current user's subscription status.
     """
-    # Get the most recent active subscription
+    # Get the most recent active and paid subscription
     subscription = db.query(Subscription).filter(
         Subscription.user_id == current_user.id,
         Subscription.is_active == True,
+        Subscription.payment_status == "paid",
         Subscription.end_date > get_utc_now()
     ).order_by(Subscription.end_date.desc()).first()
 
@@ -156,10 +158,13 @@ async def get_my_subscription(
     # Calculate days remaining
     days_remaining = (subscription.end_date - get_utc_now()).days
 
+    # Get plan name as a clean string (remove any numeric suffix completely)
+    plan_name = re.sub(r'\.\d+$', '', str(subscription.plan.name)) if subscription.plan and subscription.plan.name else "Unknown"
+
     return UserSubscriptionStatus(
         has_active_subscription=True,
         subscription_end_date=subscription.end_date,
-        plan_name=subscription.plan.name,
+        plan_name=plan_name,
         days_remaining=days_remaining
     )
 
@@ -189,13 +194,14 @@ async def create_subscription(
     start_date = get_utc_now()
     end_date = start_date + timedelta(days=plan.duration_days)
 
-    # Create new subscription
+    # Create new subscription (inactive until payment is confirmed)
     subscription = Subscription(
         user_id=current_user.id,
         plan_id=plan.id,
         start_date=start_date,
         end_date=end_date,
-        is_active=True,
+        is_active=False,  # Set to False initially
+        payment_status="pending",  # Set payment status to pending
         auto_renew=subscription_in.auto_renew,
     )
 
@@ -273,16 +279,20 @@ async def check_subscription_access(
     if current_user.is_superuser:
         return {"has_access": True, "message": "Admin access granted"}
 
-    # Check for active subscription
+    # Check for active subscription with paid status
     subscription = db.query(Subscription).filter(
         Subscription.user_id == current_user.id,
         Subscription.is_active == True,
+        Subscription.payment_status == "paid",
         Subscription.end_date > get_utc_now()
     ).first()
 
     if subscription:
         days_remaining = (subscription.end_date - get_utc_now()).days
         hours_remaining = int((subscription.end_date - get_utc_now()).total_seconds() // 3600)
+
+        # Get plan name as a clean string (remove any numeric suffix completely)
+        plan_name = re.sub(r'\.\d+$', '', str(subscription.plan.name)) if subscription.plan and subscription.plan.name else "Unknown"
 
         # For daily plans, show hours remaining instead of days
         time_remaining_msg = (
@@ -292,9 +302,10 @@ async def check_subscription_access(
 
         return {
             "has_access": True,
-            "message": f"Access granted. Your {subscription.plan.name} subscription is active for {time_remaining_msg}.",
+            "message": f"Access granted. Your {plan_name} subscription is active for {time_remaining_msg}.",
             "days_remaining": days_remaining,
-            "hours_remaining": hours_remaining
+            "hours_remaining": hours_remaining,
+            "plan_name": plan_name
         }
 
     return {

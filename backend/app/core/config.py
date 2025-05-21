@@ -35,8 +35,19 @@ class Settings(BaseSettings):
 
     # Email settings
     EMAILS_ENABLED: bool = False
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER: str = os.getenv("SMTP_USER", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
     EMAILS_FROM_EMAIL: str = os.getenv("EMAILS_FROM_EMAIL", "info@movieapp.com")
     EMAILS_FROM_NAME: str = os.getenv("EMAILS_FROM_NAME", "Movie Streaming App")
+
+    # Razorpay settings
+    RAZORPAY_KEY_ID: str = os.getenv("RAZORPAY_KEY_ID", "rzp_test_key")
+    RAZORPAY_KEY_SECRET: str = os.getenv("RAZORPAY_KEY_SECRET", "rzp_test_secret")
+    RAZORPAY_WEBHOOK_SECRET: str = os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
+    PAYMENT_SUCCESS_URL: str = os.getenv("PAYMENT_SUCCESS_URL", "http://localhost:5173/payment/success")
+    PAYMENT_FAILURE_URL: str = os.getenv("PAYMENT_FAILURE_URL", "http://localhost:5173/payment/failure")
 
     @field_validator("CORS_ORIGINS")
     def assemble_cors_origins(cls, v):

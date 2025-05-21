@@ -10,4 +10,6 @@ email-validator==2.1.1
 python-dotenv==1.0.1
 bcrypt
 psycopg2-binary==2.9.9
+razorpay==1.4.2
+jinja2==3.1.6
 

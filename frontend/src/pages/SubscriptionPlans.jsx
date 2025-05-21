@@ -27,6 +27,15 @@ const SubscriptionPlans = () => {
         // Fetch current subscription if user is logged in
         if (currentUser) {
           const subscriptionResponse = await subscriptionService.getMySubscription();
+          console.log('Subscription response:', subscriptionResponse.data);
+
+          // Fix for plan.0 issue - ensure plan_name is a clean string
+          if (subscriptionResponse.data && subscriptionResponse.data.plan_name) {
+            // Remove any numeric suffixes completely
+            const cleanPlanName = subscriptionResponse.data.plan_name.toString().replace(/\.\d+$/, '');
+            subscriptionResponse.data.plan_name = cleanPlanName;
+          }
+
           setCurrentSubscription(subscriptionResponse.data);
         }
       } catch (error) {
@@ -49,18 +58,12 @@ const SubscriptionPlans = () => {
 
     try {
       setProcessingPlanId(planId);
-      await subscriptionService.subscribe(planId);
 
-      // Refresh subscription status
-      const subscriptionResponse = await subscriptionService.getMySubscription();
-      setCurrentSubscription(subscriptionResponse.data);
-
-      // Show success message or redirect
-      alert('Subscription successful! You now have access to all movies.');
+      // Redirect to payment page
+      navigate(`/payment/${planId}`);
     } catch (error) {
-      console.error('Error subscribing to plan:', error);
+      console.error('Error processing subscription:', error);
       setError('Failed to process subscription. Please try again later.');
-    } finally {
       setProcessingPlanId(null);
     }
   };
@@ -91,7 +94,7 @@ const SubscriptionPlans = () => {
         <div className="current-subscription-info">
           <h2>Your Current Subscription</h2>
           <p>
-            You are currently subscribed to the <strong>{currentSubscription.plan_name}</strong> plan.
+            You are currently subscribed to the <strong>{currentSubscription.plan_name?.toString().replace(/\.\d+$/, '')}</strong>.
             {currentSubscription.days_remaining && (
               <span> Your subscription is valid for {currentSubscription.days_remaining} more days.</span>
             )}
@@ -126,13 +129,13 @@ const SubscriptionPlans = () => {
               disabled={
                 processingPlanId === plan.id ||
                 (currentSubscription?.has_active_subscription &&
-                 currentSubscription?.plan_name === plan.name)
+                 currentSubscription?.plan_name?.toString().replace(/\.\d+$/, '') === plan.name)
               }
             >
               {processingPlanId === plan.id ? (
                 'Processing...'
               ) : currentSubscription?.has_active_subscription &&
-                 currentSubscription?.plan_name === plan.name ? (
+                 currentSubscription?.plan_name?.toString().replace(/\.\d+$/, '') === plan.name ? (
                 'Current Plan'
               ) : (
                 'Subscribe'

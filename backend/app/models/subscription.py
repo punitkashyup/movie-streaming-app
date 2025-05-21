@@ -32,12 +32,14 @@ class Subscription(Base):
     end_date = Column(DateTime(timezone=True))
     is_active = Column(Boolean, default=True)
     auto_renew = Column(Boolean, default=True)
+    payment_status = Column(String, default="pending")  # pending, paid, failed
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relationships - using string reference to avoid circular imports
     user = relationship("app.models.user.User", back_populates="subscriptions")
     plan = relationship("SubscriptionPlan", back_populates="subscriptions")
+    payments = relationship("app.models.payment.Payment", back_populates="subscription")
 
     def is_valid(self) -> bool:
         """Check if the subscription is currently valid"""

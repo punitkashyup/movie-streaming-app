@@ -53,6 +53,9 @@ const AdminDashboard = () => {
         <Link to="/admin/users" className="btn-secondary">
           Manage Users
         </Link>
+        <Link to="/admin/payments" className="btn-secondary">
+          Payment Transactions
+        </Link>
       </div>
 
       {loading ? (

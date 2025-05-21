@@ -221,7 +221,8 @@ export const subscriptionService = {
               plan_id: planId,
               start_date: new Date().toISOString(),
               end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-              is_active: true,
+              is_active: false, // Initially inactive
+              payment_status: "pending", // Initially pending
               auto_renew: autoRenew,
               plan: {
                 id: planId,
@@ -848,6 +849,133 @@ export const authService = {
 
     return api.get('/users/me');
   },
+};
+
+/**
+ * paymentService - Service for payment-related API calls
+ */
+export const paymentService = {
+  createOrder: async (subscriptionId) => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            data: {
+              order_id: `order_${Math.random().toString(36).substring(2, 15)}`,
+              currency: "INR",
+              amount: 199,
+              key: "rzp_test_key"
+            }
+          });
+        }, 500);
+      });
+    }
+    return api.post(`/payments/create-order?subscription_id=${subscriptionId}`);
+  },
+
+  verifyPayment: async (paymentData) => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            data: {
+              id: 1,
+              user_id: 1,
+              subscription_id: 1,
+              amount: 199,
+              currency: "INR",
+              payment_method: "card",
+              razorpay_order_id: paymentData.razorpay_order_id,
+              razorpay_payment_id: paymentData.razorpay_payment_id,
+              razorpay_signature: paymentData.razorpay_signature,
+              status: "successful",
+              created_at: new Date().toISOString()
+            }
+          });
+        }, 500);
+      });
+    }
+    return api.post('/payments/verify', paymentData);
+  },
+
+  getMyPayments: async () => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            data: [
+              {
+                id: 1,
+                user_id: 1,
+                subscription_id: 1,
+                amount: 199,
+                currency: "INR",
+                payment_method: "card",
+                razorpay_order_id: "order_123456",
+                razorpay_payment_id: "pay_123456",
+                razorpay_signature: "signature_123456",
+                status: "successful",
+                created_at: new Date().toISOString()
+              }
+            ]
+          });
+        }, 500);
+      });
+    }
+    return api.get('/payments/my');
+  },
+
+  getPaymentReceipt: async (paymentId) => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            data: {
+              id: paymentId,
+              transaction_id: "pay_123456",
+              payment_date: new Date().toISOString(),
+              amount: 199,
+              currency: "INR",
+              payment_method: "card",
+              subscription_plan: "Monthly",
+              subscription_duration: "30 days",
+              user_name: "Test User",
+              user_email: "user@example.com",
+              status: "successful"
+            }
+          });
+        }, 500);
+      });
+    }
+    return api.get(`/payments/${paymentId}/receipt`);
+  },
+
+  getAllPayments: async (params = {}) => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            data: [
+              {
+                id: 1,
+                user_id: 1,
+                subscription_id: 1,
+                amount: 199,
+                currency: "INR",
+                payment_method: "card",
+                razorpay_order_id: "order_123456",
+                razorpay_payment_id: "pay_123456",
+                razorpay_signature: "signature_123456",
+                status: "successful",
+                created_at: new Date().toISOString()
+              }
+            ]
+          });
+        }, 500);
+      });
+    }
+    return api.get('/admin/payments', { params });
+  }
 };
 
 /**

@@ -2,6 +2,7 @@ from typing import Optional, List
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from .subscription import Subscription, UserSubscriptionStatus
+from .payment import Payment
 
 # Shared properties
 class UserBase(BaseModel):
@@ -29,9 +30,14 @@ class UserInDBBase(UserBase):
     class Config:
         from_attributes = True
 
+# User Payment History
+class UserPaymentHistory(BaseModel):
+    payments: List[Payment] = []
+
 # Additional properties to return via API
 class User(UserInDBBase):
     subscription_status: Optional[UserSubscriptionStatus] = None
+    payment_history: Optional[UserPaymentHistory] = None
 
 # Additional properties stored in DB
 class UserInDB(UserInDBBase):
