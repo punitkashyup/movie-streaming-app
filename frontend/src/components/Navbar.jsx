@@ -26,6 +26,7 @@ const Navbar = () => {
                 <li>
                   <button
                     onClick={logout}
+                    className="nav-logout-btn"
                   >
                     Logout
                   </button>
