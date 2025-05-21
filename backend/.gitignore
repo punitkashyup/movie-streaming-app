@@ -1,0 +1,45 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+pip-log.txt
+pip-delete-this-directory.txt
+venv/
+ENV/
+env/
+venv.bak/
+.env
+*.sqlite3
+
+# ===============================
+# macOS
+# ===============================
+.DS_Store
+
+# ===============================
+# VSCode
+# ===============================
+.vscode/
+
+# ===============================
+# Logs
+# ===============================
+*.log
+
+# ===============================
+# Coverage and testing
+# ===============================
+.coverage
+.tox/
+.nox/
+.cache/
+.pytest_cache/
+coverage.xml
+htmlcov/

@@ -1,0 +1,137 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+env:
+  AWS_REGION: 'us-east-1'
+  NODE_VERSION: '16'
+
+jobs:
+  test:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm ci
+        
+    - name: Run tests
+      run: |
+        cd frontend
+        npm test
+        
+  build:
+    name: Build Frontend
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm ci
+        
+    - name: Get environment variables
+      id: get-env-vars
+      run: |
+        ENVIRONMENT=${{ github.event.inputs.environment || 'dev' }}
+        echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+        
+        # Create .env file for the frontend build
+        echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" > frontend/.env
+        echo "VITE_CLOUDFRONT_DOMAIN=${{ secrets.VITE_CLOUDFRONT_DOMAIN }}" >> frontend/.env
+        
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm run build
+        
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: frontend-build-${{ steps.get-env-vars.outputs.environment }}
+        path: frontend/dist
+        retention-days: 7
+        
+  deploy:
+    name: Deploy Frontend
+    needs: build
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+        
+    - name: Download build artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: frontend-build-${{ github.event.inputs.environment || 'dev' }}
+        path: frontend/dist
+        
+    - name: Get S3 bucket name
+      id: get-bucket
+      run: |
+        ENVIRONMENT=${{ github.event.inputs.environment || 'dev' }}
+        BUCKET_NAME=${{ secrets.FRONTEND_BUCKET_NAME }}
+        echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
+        
+    - name: Deploy to S3
+      run: |
+        aws s3 sync frontend/dist s3://${{ steps.get-bucket.outputs.bucket_name }} --delete
+        
+    - name: Invalidate CloudFront cache
+      run: |
+        aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"

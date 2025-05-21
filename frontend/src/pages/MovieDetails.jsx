@@ -1,0 +1,195 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { movieService } from '../services/api';
+import VideoPlayer from '../components/VideoPlayer';
+
+const MovieDetails = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [movie, setMovie] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [transcodingStatus, setTranscodingStatus] = useState(null);
+
+  useEffect(() => {
+    const fetchMovie = async () => {
+      try {
+        setLoading(true);
+        const response = await movieService.getMovie(id);
+        setMovie(response.data);
+
+        // Check transcoding status if the movie has a video
+        if (response.data.video_url) {
+          const statusResponse = await movieService.getTranscodingStatus(id);
+          setTranscodingStatus(statusResponse.data);
+        }
+      } catch (error) {
+        console.error('Error fetching movie:', error);
+        if (error.response?.status === 404) {
+          navigate('/404');
+        } else {
+          setError('Failed to load movie details. Please try again later.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMovie();
+
+    // Poll for transcoding status updates if needed
+    let statusInterval;
+    if (movie && movie.transcoding_status === "PROCESSING") {
+      statusInterval = setInterval(async () => {
+        try {
+          const statusResponse = await movieService.getTranscodingStatus(id);
+          setTranscodingStatus(statusResponse.data);
+
+          // Stop polling if transcoding is complete or failed
+          if (statusResponse.data.transcoding_status !== "PROCESSING") {
+            clearInterval(statusInterval);
+          }
+        } catch (error) {
+          console.error('Error checking transcoding status:', error);
+        }
+      }, 10000); // Check every 10 seconds
+    }
+
+    return () => {
+      if (statusInterval) {
+        clearInterval(statusInterval);
+      }
+    };
+  }, [id, navigate, movie?.transcoding_status]);
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error-message">
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  if (!movie) {
+    return null;
+  }
+
+  return (
+    <div className="movie-details">
+      <div className="movie-details-card">
+        {isPlaying ? (
+          <div className="video-container">
+            <VideoPlayer
+              videoUrl={
+                // Use streaming URL if available and transcoded, otherwise use original video
+                (transcodingStatus?.is_transcoded && transcodingStatus?.streaming_url)
+                  ? transcodingStatus.streaming_url
+                  : movie.video_url
+              }
+              posterUrl={movie.poster_url}
+              title={movie.title}
+            />
+
+            {/* Show transcoding status if video is being processed */}
+            {movie.video_url && transcodingStatus && transcodingStatus.transcoding_status === "PROCESSING" && (
+              <div className="transcoding-status">
+                <p>This video is being optimized for streaming. You can watch the original version now, or wait for the high-quality streaming version.</p>
+                <div className="transcoding-progress">Processing...</div>
+              </div>
+            )}
+
+            {/* Show error if transcoding failed */}
+            {movie.video_url && transcodingStatus && transcodingStatus.transcoding_status === "ERROR" && (
+              <div className="transcoding-error">
+                <p>There was an issue optimizing this video for streaming. You can still watch the original version.</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="movie-poster-container">
+            {movie.poster_url ? (
+              <img
+                src={movie.poster_url}
+                alt={movie.title}
+                className="movie-poster-large"
+              />
+            ) : (
+              <div className="movie-poster-placeholder-large">
+                <span>No Image Available</span>
+              </div>
+            )}
+            <div className="play-button-overlay">
+              <button
+                onClick={() => setIsPlaying(true)}
+                className="play-button"
+                disabled={!movie.video_url}
+              >
+                <svg width="48" height="48" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="movie-details-content">
+          <div className="movie-header">
+            <h1>{movie.title}</h1>
+            <div className="movie-meta-info">
+              <div className="movie-rating">
+                {movie.rating.toFixed(1)}
+              </div>
+              <span className="movie-year-duration">
+                {movie.release_year} • {movie.duration} min
+              </span>
+            </div>
+          </div>
+
+          <div className="movie-info-section">
+            <div className="movie-genres">
+              <span className="genre-tag">
+                {movie.genre}
+              </span>
+            </div>
+
+            <p className="movie-description">
+              {movie.description}
+            </p>
+
+            <div className="movie-credits">
+              <div className="credit-item">
+                <h3>Director</h3>
+                <p>{movie.director}</p>
+              </div>
+              <div className="credit-item">
+                <h3>Cast</h3>
+                <p>{movie.cast}</p>
+              </div>
+            </div>
+          </div>
+
+          {!isPlaying && (
+            <button
+              onClick={() => setIsPlaying(true)}
+              className="btn-primary"
+            >
+              Watch Now
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default MovieDetails;

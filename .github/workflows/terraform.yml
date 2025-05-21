@@ -1,0 +1,114 @@
+name: Terraform Infrastructure Deployment
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/terraform.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/terraform.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+env:
+  TF_VERSION: '1.5.7'
+  AWS_REGION: 'us-east-1'
+
+jobs:
+  terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: infra/environments/${{ github.event.inputs.environment || 'dev' }}
+
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    # Install the latest version of Terraform CLI
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+    # Configure AWS credentials
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+    - name: Terraform Init
+      run: terraform init
+      env:
+        TF_CLI_ARGS_init: "-backend-config=bucket=${{ secrets.TF_STATE_BUCKET }} -backend-config=key=${{ github.event.inputs.environment || 'dev' }}/terraform.tfstate -backend-config=region=${{ env.AWS_REGION }} -backend-config=dynamodb_table=${{ secrets.TF_LOCK_TABLE }}"
+
+    # Checks that all Terraform configuration files adhere to a canonical format
+    - name: Terraform Format
+      run: terraform fmt -check -recursive
+      working-directory: infra
+
+    # Validate the Terraform files
+    - name: Terraform Validate
+      run: terraform validate
+
+    # Generate an execution plan for Terraform
+    - name: Terraform Plan
+      run: terraform plan -input=false
+      env:
+        TF_VAR_project_name: ${{ secrets.PROJECT_NAME }}
+        TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
+        TF_VAR_zone_id: ${{ secrets.ZONE_ID }}
+        TF_VAR_emails_from_email: ${{ secrets.EMAILS_FROM_EMAIL }}
+        TF_VAR_emails_from_name: ${{ secrets.EMAILS_FROM_NAME }}
+        TF_VAR_backend_container_image: ${{ secrets.BACKEND_CONTAINER_IMAGE }}
+      
+    # Apply the Terraform execution plan
+    - name: Terraform Apply
+      if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+      run: terraform apply -auto-approve -input=false
+      env:
+        TF_VAR_project_name: ${{ secrets.PROJECT_NAME }}
+        TF_VAR_domain_name: ${{ secrets.DOMAIN_NAME }}
+        TF_VAR_zone_id: ${{ secrets.ZONE_ID }}
+        TF_VAR_emails_from_email: ${{ secrets.EMAILS_FROM_EMAIL }}
+        TF_VAR_emails_from_name: ${{ secrets.EMAILS_FROM_NAME }}
+        TF_VAR_backend_container_image: ${{ secrets.BACKEND_CONTAINER_IMAGE }}
+
+    # Output the environment variables for the application
+    - name: Output Environment Variables
+      if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+      run: |
+        terraform output env_file_content > env_output.txt
+        cat env_output.txt
+      
+    # Save the environment variables as an artifact
+    - name: Save Environment Variables
+      if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+      uses: actions/upload-artifact@v3
+      with:
+        name: env-file-${{ github.event.inputs.environment || 'dev' }}
+        path: infra/environments/${{ github.event.inputs.environment || 'dev' }}/env_output.txt
+        retention-days: 7
