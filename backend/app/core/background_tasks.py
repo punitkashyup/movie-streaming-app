@@ -1,12 +1,12 @@
 import asyncio
 import logging
-from datetime import datetime
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.movie import Movie
 from app.services.mediaconvert import get_job_status
 from app.services.s3 import s3_client
 from app.core.config import settings
+from app.core.utils import get_utc_now
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -108,7 +108,7 @@ async def check_transcoding_status():
                             logger.info(f"Movie {movie.id} transcoding failed with status {status}")
 
                         # Update timestamp
-                        movie.updated_at = datetime.utcnow()
+                        movie.updated_at = get_utc_now()
 
                         # Save changes
                         db.add(movie)

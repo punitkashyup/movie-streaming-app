@@ -39,13 +39,22 @@ const AdminDashboard = () => {
   return (
     <div className="admin-dashboard">
       <h1>Admin Dashboard</h1>
-      
+
       <div className="admin-actions">
         <Link to="/admin/movies/add" className="btn-primary">
           Add New Movie
         </Link>
+        <Link to="/admin/subscriptions" className="btn-secondary">
+          Manage Subscriptions
+        </Link>
+        <Link to="/admin/subscription-plans" className="btn-secondary">
+          Manage Plans
+        </Link>
+        <Link to="/admin/users" className="btn-secondary">
+          Manage Users
+        </Link>
       </div>
-      
+
       {loading ? (
         <p>Loading movies...</p>
       ) : error ? (
@@ -74,7 +83,7 @@ const AdminDashboard = () => {
                     <Link to={`/admin/movies/edit/${movie.id}`} className="btn-edit">
                       Edit
                     </Link>
-                    <button 
+                    <button
                       onClick={() => handleDeleteMovie(movie.id)}
                       className="btn-delete"
                     >

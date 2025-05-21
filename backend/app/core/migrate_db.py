@@ -3,6 +3,9 @@ from sqlalchemy import Column, String, Boolean
 from sqlalchemy.sql import text
 from app.core.database import engine, Base, get_db
 from app.models.movie import Movie
+from app.models.user import User
+from app.models.subscription import SubscriptionPlan, Subscription
+from app.core.migrate_subscription_db import migrate_subscription_db
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -50,6 +53,9 @@ def migrate_db():
     add_column("movies", "mediaconvert_job_id", "VARCHAR")
     add_column("movies", "is_transcoded", "BOOLEAN DEFAULT FALSE")
     add_column("movies", "transcoding_status", "VARCHAR DEFAULT 'NOT_STARTED'")
+
+    # Run subscription migrations
+    migrate_subscription_db()
 
     logger.info("Database migrations completed successfully")
 

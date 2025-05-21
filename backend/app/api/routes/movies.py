@@ -281,6 +281,22 @@ async def get_transcoding_status(
             detail="Movie not found",
         )
 
+    # Check if user has an active subscription or is an admin
+    has_access = current_user.is_superuser
+
+    if not has_access:
+        # Check for active subscription
+        from app.models.subscription import Subscription
+        from app.core.utils import get_utc_now
+
+        subscription = db.query(Subscription).filter(
+            Subscription.user_id == current_user.id,
+            Subscription.is_active == True,
+            Subscription.end_date > get_utc_now()
+        ).first()
+
+        has_access = subscription is not None
+
     # If the movie has a MediaConvert job ID and is still processing, check the status
     if movie.mediaconvert_job_id and movie.transcoding_status == "PROCESSING":
         job_status = get_job_status(movie.mediaconvert_job_id)
@@ -297,11 +313,18 @@ async def get_transcoding_status(
             db.commit()
             db.refresh(movie)
 
+    # Return streaming URL only if user has access
+    streaming_url = None
+    if has_access and movie.is_transcoded:
+        streaming_url = movie.streaming_url
+
     return {
         "movie_id": movie_id,
         "transcoding_status": movie.transcoding_status,
         "is_transcoded": movie.is_transcoded,
-        "streaming_url": movie.streaming_url if movie.is_transcoded else None
+        "streaming_url": streaming_url,
+        "has_access": has_access,
+        "requires_subscription": not has_access
     }
 
 @router.get("/search-movies")

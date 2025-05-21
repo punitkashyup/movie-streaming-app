@@ -1,8 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import auth, movies, users
+from app.api.routes import auth, movies, users, subscriptions
 from app.core.config import settings
 from app.core.background_tasks import start_background_tasks
+
+# Import all models to ensure they're registered with SQLAlchemy
+from app.models.user import User
+from app.models.movie import Movie
+from app.models.subscription import SubscriptionPlan, Subscription
 
 app = FastAPI(
     title="Movie Streaming API",
@@ -26,6 +31,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/v1/api", tags=["Authentication"])
 app.include_router(movies.router, prefix="/v1/api", tags=["Movies"])
 app.include_router(users.router, prefix="/v1/api", tags=["Users"])
+app.include_router(subscriptions.router, prefix="/v1/api", tags=["Subscriptions"])
 
 @app.get("/")
 async def root():

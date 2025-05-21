@@ -9,10 +9,14 @@ import MovieDetails from './pages/MovieDetails'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Profile from './pages/Profile'
+import SubscriptionPlans from './pages/SubscriptionPlans'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 import AdminDashboard from './pages/AdminDashboard'
+import AdminSubscriptions from './pages/AdminSubscriptions'
+import AdminSubscriptionPlans from './pages/AdminSubscriptionPlans'
+import AdminUsers from './pages/AdminUsers'
 import MovieForm from './pages/MovieForm'
 import './index.css'
 import './App.css'
@@ -32,6 +36,7 @@ function App() {
                 <Route path="/movie/:id" element={<MovieDetails />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/subscriptions" element={<SubscriptionPlans />} />
                 <Route
                   path="/profile"
                   element={
@@ -62,6 +67,30 @@ function App() {
                   element={
                     <AdminRoute>
                       <MovieForm />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/subscriptions"
+                  element={
+                    <AdminRoute>
+                      <AdminSubscriptions />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/subscription-plans"
+                  element={
+                    <AdminRoute>
+                      <AdminSubscriptionPlans />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/users"
+                  element={
+                    <AdminRoute>
+                      <AdminUsers />
                     </AdminRoute>
                   }
                 />

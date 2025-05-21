@@ -129,6 +129,603 @@ api.interceptors.request.use(
 );
 
 /**
+ * subscriptionService - Service for subscription-related API calls
+ */
+export const subscriptionService = {
+  getSubscriptionPlans: async () => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            data: [
+              {
+                id: 1,
+                name: "Daily",
+                description: "24-hour access to all movies in standard definition",
+                price: 149,
+                duration_days: 1,
+                features: "Standard Definition,Watch on one device at a time,Full catalog access for 24 hours",
+                is_active: true
+              },
+              {
+                id: 2,
+                name: "Weekly",
+                description: "7-day access to all movies in HD quality",
+                price: 599,
+                duration_days: 7,
+                features: "HD Quality,Watch on up to 2 devices at a time,Full catalog access for 7 days",
+                is_active: true
+              },
+              {
+                id: 3,
+                name: "Monthly",
+                description: "30-day access to all movies in HD and Ultra HD",
+                price: 1199,
+                duration_days: 30,
+                features: "HD and Ultra HD,Watch on up to 4 devices at a time,Offline downloads,Full catalog access for 30 days",
+                is_active: true
+              }
+            ]
+          });
+        }, 500);
+      });
+    }
+    return api.get('/subscription-plans');
+  },
+
+  getMySubscription: async () => {
+    if (USE_MOCK_DATA) {
+      const userType = localStorage.getItem('userType');
+
+      // If admin or no user, return no subscription
+      if (userType === 'admin' || !userType) {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              data: {
+                has_active_subscription: userType === 'admin',
+                subscription_end_date: null,
+                plan_name: null,
+                days_remaining: null
+              }
+            });
+          }, 500);
+        });
+      }
+
+      // Mock subscription for regular users
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            data: {
+              has_active_subscription: true,
+              subscription_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+              plan_name: "Premium",
+              days_remaining: 30
+            }
+          });
+        }, 500);
+      });
+    }
+    return api.get('/subscriptions/me');
+  },
+
+  subscribe: async (planId, autoRenew = true) => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            data: {
+              id: 1,
+              user_id: 1,
+              plan_id: planId,
+              start_date: new Date().toISOString(),
+              end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+              is_active: true,
+              auto_renew: autoRenew,
+              plan: {
+                id: planId,
+                name: planId === 1 ? "Daily" : planId === 2 ? "Weekly" : "Monthly",
+                price: planId === 1 ? 149 : planId === 2 ? 599 : 1199,
+                duration_days: planId === 1 ? 1 : planId === 2 ? 7 : 30
+              }
+            }
+          });
+        }, 500);
+      });
+    }
+    return api.post('/subscriptions', { plan_id: planId, auto_renew: autoRenew });
+  },
+
+  updateSubscription: async (subscriptionId, data) => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            data: {
+              id: subscriptionId,
+              ...data,
+              user_id: 1,
+              start_date: new Date().toISOString(),
+              end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+            }
+          });
+        }, 500);
+      });
+    }
+    return api.put(`/subscriptions/${subscriptionId}`, data);
+  },
+
+  checkAccess: async () => {
+    if (USE_MOCK_DATA) {
+      const userType = localStorage.getItem('userType');
+
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          if (userType === 'admin') {
+            resolve({
+              data: {
+                has_access: true,
+                message: "Admin access granted"
+              }
+            });
+          } else if (userType === 'user') {
+            resolve({
+              data: {
+                has_access: true,
+                message: "Access granted. Your Weekly subscription is active.",
+                days_remaining: 7,
+                hours_remaining: 168
+              }
+            });
+          } else {
+            resolve({
+              data: {
+                has_access: false,
+                message: "You need an active subscription to access this content."
+              }
+            });
+          }
+        }, 500);
+      });
+    }
+    return api.get('/subscriptions/check-access');
+  },
+
+  // Admin subscription plan management
+  createSubscriptionPlan: async (planData) => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const newPlan = {
+            id: Math.floor(Math.random() * 1000) + 10, // Random ID that won't conflict with existing ones
+            name: planData.name,
+            description: planData.description,
+            price: planData.price,
+            duration_days: planData.duration_days,
+            features: planData.features,
+            is_active: planData.is_active !== undefined ? planData.is_active : true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+
+          resolve({ data: newPlan });
+        }, 500);
+      });
+    }
+    return api.post('/subscription-plans', planData);
+  },
+
+  updateSubscriptionPlan: async (planId, planData) => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          if (planId > 0) {
+            const updatedPlan = {
+              id: planId,
+              ...planData,
+              updated_at: new Date().toISOString()
+            };
+
+            resolve({ data: updatedPlan });
+          } else {
+            reject({
+              response: { status: 404, data: { detail: "Subscription plan not found" } }
+            });
+          }
+        }, 500);
+      });
+    }
+    return api.put(`/subscription-plans/${planId}`, planData);
+  },
+
+  deleteSubscriptionPlan: async (planId) => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          if (planId > 0) {
+            // Check if it's one of the default plans (1, 2, 3)
+            if (planId <= 3) {
+              // Simulate having active subscriptions for default plans
+              reject({
+                response: {
+                  status: 400,
+                  data: {
+                    detail: "Cannot delete plan with active subscriptions. Deactivate the plan instead."
+                  }
+                }
+              });
+            } else {
+              resolve({
+                data: {
+                  success: true,
+                  message: "Subscription plan has been deactivated successfully."
+                }
+              });
+            }
+          } else {
+            reject({
+              response: { status: 404, data: { detail: "Subscription plan not found" } }
+            });
+          }
+        }, 500);
+      });
+    }
+    return api.delete(`/subscription-plans/${planId}`);
+  },
+
+  // Admin subscription management
+  getAllSubscriptions: async (status = null) => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const mockSubscriptions = [
+            {
+              id: 1,
+              user_id: 2,
+              plan_id: 1,
+              start_date: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(), // 12 hours ago
+              end_date: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),   // 12 hours from now
+              is_active: true,
+              auto_renew: false,
+              created_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+              plan: {
+                id: 1,
+                name: "Daily",
+                price: 149,
+                duration_days: 1
+              }
+            },
+            {
+              id: 2,
+              user_id: 3,
+              plan_id: 2,
+              start_date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+              end_date: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),   // 4 days from now
+              is_active: true,
+              auto_renew: true,
+              created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+              plan: {
+                id: 2,
+                name: "Weekly",
+                price: 599,
+                duration_days: 7
+              }
+            },
+            {
+              id: 3,
+              user_id: 4,
+              plan_id: 3,
+              start_date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), // 15 days ago
+              end_date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),   // 15 days from now
+              is_active: true,
+              auto_renew: true,
+              created_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+              plan: {
+                id: 3,
+                name: "Monthly",
+                price: 1199,
+                duration_days: 30
+              }
+            },
+            {
+              id: 4,
+              user_id: 5,
+              plan_id: 2,
+              start_date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
+              end_date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),    // 3 days ago (expired)
+              is_active: false,
+              auto_renew: false,
+              created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+              plan: {
+                id: 2,
+                name: "Weekly",
+                price: 599,
+                duration_days: 7
+              }
+            }
+          ];
+
+          // Filter based on status
+          let filteredSubscriptions = mockSubscriptions;
+          if (status === 'active') {
+            const now = new Date();
+            filteredSubscriptions = mockSubscriptions.filter(sub =>
+              sub.is_active && new Date(sub.end_date) > now
+            );
+          } else if (status === 'expired') {
+            const now = new Date();
+            filteredSubscriptions = mockSubscriptions.filter(sub =>
+              !sub.is_active || new Date(sub.end_date) <= now
+            );
+          }
+
+          resolve({
+            data: filteredSubscriptions
+          });
+        }, 500);
+      });
+    }
+
+    const params = status ? { status } : {};
+    return api.get('/admin/subscriptions', { params });
+  },
+
+  getSubscriptionById: async (id) => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          const mockSubscription = {
+            id: id,
+            user_id: 2,
+            plan_id: 2,
+            start_date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+            end_date: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
+            is_active: true,
+            auto_renew: true,
+            created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+            plan: {
+              id: 2,
+              name: "Weekly",
+              price: 599,
+              duration_days: 7
+            }
+          };
+
+          if (id > 0 && id < 5) {
+            resolve({
+              data: mockSubscription
+            });
+          } else {
+            reject({
+              response: { status: 404, data: { detail: "Subscription not found" } }
+            });
+          }
+        }, 500);
+      });
+    }
+
+    return api.get(`/admin/subscriptions/${id}`);
+  },
+
+  extendSubscription: async (id, days) => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          if (id > 0 && id < 5) {
+            const mockSubscription = {
+              id: id,
+              user_id: 2,
+              plan_id: 2,
+              start_date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+              end_date: new Date(Date.now() + (4 + days) * 24 * 60 * 60 * 1000).toISOString(),
+              is_active: true,
+              auto_renew: true,
+              created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+              plan: {
+                id: 2,
+                name: "Weekly",
+                price: 599,
+                duration_days: 7
+              }
+            };
+
+            resolve({
+              data: mockSubscription
+            });
+          } else {
+            reject({
+              response: { status: 404, data: { detail: "Subscription not found" } }
+            });
+          }
+        }, 500);
+      });
+    }
+
+    return api.put(`/admin/subscriptions/${id}/extend`, { days });
+  },
+
+  cancelSubscription: async (id) => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          if (id > 0 && id < 5) {
+            const mockSubscription = {
+              id: id,
+              user_id: 2,
+              plan_id: 2,
+              start_date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+              end_date: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
+              is_active: false,
+              auto_renew: false,
+              created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+              plan: {
+                id: 2,
+                name: "Weekly",
+                price: 599,
+                duration_days: 7
+              }
+            };
+
+            resolve({
+              data: mockSubscription
+            });
+          } else {
+            reject({
+              response: { status: 404, data: { detail: "Subscription not found" } }
+            });
+          }
+        }, 500);
+      });
+    }
+
+    return api.put(`/admin/subscriptions/${id}/cancel`);
+  }
+};
+
+/**
+ * userService - Service for user-related API calls
+ */
+export const userService = {
+  getUser: async (id) => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          // Mock user data
+          if (id > 0 && id < 10) {
+            resolve({
+              data: {
+                id: id,
+                username: `user${id}`,
+                email: `user${id}@example.com`,
+                is_active: true,
+                is_superuser: id === 1
+              }
+            });
+          } else {
+            reject({
+              response: { status: 404, data: { detail: "User not found" } }
+            });
+          }
+        }, 300);
+      });
+    }
+    return api.get(`/users/${id}`);
+  },
+
+  getUsers: async () => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          // Mock users list
+          const users = [
+            { id: 1, username: "admin", email: "admin@example.com", is_active: true, is_superuser: true, created_at: "2023-01-01T00:00:00.000Z" },
+            { id: 2, username: "user1", email: "user1@example.com", is_active: true, is_superuser: false, created_at: "2023-01-02T00:00:00.000Z" },
+            { id: 3, username: "user2", email: "user2@example.com", is_active: true, is_superuser: false, created_at: "2023-01-03T00:00:00.000Z" },
+            { id: 4, username: "user3", email: "user3@example.com", is_active: true, is_superuser: false, created_at: "2023-01-04T00:00:00.000Z" },
+            { id: 5, username: "user4", email: "user4@example.com", is_active: false, is_superuser: false, created_at: "2023-01-05T00:00:00.000Z" }
+          ];
+          resolve({ data: users });
+        }, 500);
+      });
+    }
+    return api.get('/users');
+  },
+
+  createUser: async (userData) => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          // Check if username or email already exists
+          if (userData.username === 'admin' || userData.email === 'admin@example.com') {
+            reject({
+              response: {
+                status: 400,
+                data: { detail: "The user with this username or email already exists in the system." }
+              }
+            });
+            return;
+          }
+
+          const newUser = {
+            id: Math.floor(Math.random() * 1000) + 10,
+            username: userData.username,
+            email: userData.email,
+            is_active: userData.is_active !== undefined ? userData.is_active : true,
+            is_superuser: userData.is_superuser !== undefined ? userData.is_superuser : false,
+            created_at: new Date().toISOString()
+          };
+
+          resolve({ data: newUser });
+        }, 500);
+      });
+    }
+    return api.post('/users', userData);
+  },
+
+  updateUser: async (userId, userData) => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          if (userId > 0) {
+            const updatedUser = {
+              id: userId,
+              username: userData.username || `user${userId}`,
+              email: userData.email || `user${userId}@example.com`,
+              is_active: userData.is_active !== undefined ? userData.is_active : true,
+              is_superuser: userData.is_superuser !== undefined ? userData.is_superuser : false,
+              created_at: "2023-01-01T00:00:00.000Z",
+              updated_at: new Date().toISOString()
+            };
+
+            resolve({ data: updatedUser });
+          } else {
+            reject({
+              response: { status: 404, data: { detail: "User not found" } }
+            });
+          }
+        }, 500);
+      });
+    }
+    return api.put(`/users/${userId}`, userData);
+  },
+
+  deleteUser: async (userId) => {
+    if (USE_MOCK_DATA) {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          // Simulate error cases
+          if (userId === 1) {
+            reject({
+              response: {
+                status: 400,
+                data: { detail: "Cannot delete the last admin user" }
+              }
+            });
+            return;
+          }
+
+          if (userId <= 0 || userId > 1000) {
+            reject({
+              response: { status: 404, data: { detail: "User not found" } }
+            });
+            return;
+          }
+
+          resolve({
+            data: {
+              success: true,
+              message: "User has been deleted successfully."
+            }
+          });
+        }, 500);
+      });
+    }
+    return api.delete(`/users/${userId}`);
+  }
+};
+
+/**
  * authService - Service for authentication-related API calls
  */
 export const authService = {

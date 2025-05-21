@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
+from .subscription import Subscription, UserSubscriptionStatus
 
 # Shared properties
 class UserBase(BaseModel):
@@ -30,7 +31,7 @@ class UserInDBBase(UserBase):
 
 # Additional properties to return via API
 class User(UserInDBBase):
-    pass
+    subscription_status: Optional[UserSubscriptionStatus] = None
 
 # Additional properties stored in DB
 class UserInDB(UserInDBBase):

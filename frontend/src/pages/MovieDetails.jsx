@@ -1,17 +1,25 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { movieService } from '../services/api';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { movieService, subscriptionService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import VideoPlayer from '../components/VideoPlayer';
+import SubscriptionRequired from '../components/SubscriptionRequired';
+import LoginRequired from '../components/LoginRequired';
 
 const MovieDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { currentUser } = useAuth();
 
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [transcodingStatus, setTranscodingStatus] = useState(null);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     const fetchMovie = async () => {
@@ -24,11 +32,32 @@ const MovieDetails = () => {
         if (response.data.video_url) {
           const statusResponse = await movieService.getTranscodingStatus(id);
           setTranscodingStatus(statusResponse.data);
+
+          // Check if user has access from the transcoding status response
+          if (statusResponse.data.hasOwnProperty('has_access')) {
+            setHasAccess(statusResponse.data.has_access);
+          }
+        }
+
+        // Check subscription status if user is logged in
+        if (currentUser) {
+          try {
+            const accessResponse = await subscriptionService.checkAccess();
+            setHasAccess(accessResponse.data.has_access);
+          } catch (error) {
+            console.error('Error checking subscription status:', error);
+          }
         }
       } catch (error) {
         console.error('Error fetching movie:', error);
         if (error.response?.status === 404) {
           navigate('/404');
+        } else if (error.response?.status === 401) {
+          // Handle unauthorized error - show login modal instead of error message
+          setMovie(null); // Clear any partial data
+          setShowLoginModal(true);
+          setLoading(false);
+          return; // Exit early to prevent showing error message
         } else {
           setError('Failed to load movie details. Please try again later.');
         }
@@ -53,6 +82,12 @@ const MovieDetails = () => {
           }
         } catch (error) {
           console.error('Error checking transcoding status:', error);
+
+          // Handle unauthorized error in polling
+          if (error.response?.status === 401) {
+            clearInterval(statusInterval); // Stop polling
+            setShowLoginModal(true);
+          }
         }
       }, 10000); // Check every 10 seconds
     }
@@ -62,7 +97,7 @@ const MovieDetails = () => {
         clearInterval(statusInterval);
       }
     };
-  }, [id, navigate, movie?.transcoding_status]);
+  }, [id, navigate, movie?.transcoding_status, currentUser]);
 
   if (loading) {
     return (
@@ -86,6 +121,15 @@ const MovieDetails = () => {
 
   return (
     <div className="movie-details">
+      {showLoginModal && (
+        <LoginRequired
+          onClose={() => setShowLoginModal(false)}
+          message="You need to log in to view movie details and stream content."
+        />
+      )}
+      {showSubscriptionModal && (
+        <SubscriptionRequired onClose={() => setShowSubscriptionModal(false)} />
+      )}
       <div className="movie-details-card">
         {isPlaying ? (
           <div className="movie-video-wrapper">
@@ -130,7 +174,15 @@ const MovieDetails = () => {
             )}
             <div className="play-button-overlay">
               <button
-                onClick={() => setIsPlaying(true)}
+                onClick={() => {
+                  if (!currentUser) {
+                    setShowLoginModal(true);
+                  } else if (hasAccess) {
+                    setIsPlaying(true);
+                  } else {
+                    setShowSubscriptionModal(true);
+                  }
+                }}
                 className="play-button"
                 disabled={!movie.video_url}
               >
@@ -180,10 +232,18 @@ const MovieDetails = () => {
 
           {!isPlaying && (
             <button
-              onClick={() => setIsPlaying(true)}
+              onClick={() => {
+                if (!currentUser) {
+                  setShowLoginModal(true);
+                } else if (hasAccess) {
+                  setIsPlaying(true);
+                } else {
+                  setShowSubscriptionModal(true);
+                }
+              }}
               className="btn-primary"
             >
-              Watch Now
+              {!currentUser ? "Login to Watch" : hasAccess ? "Watch Now" : "Subscribe to Watch"}
             </button>
           )}
         </div>
