@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { movieService, subscriptionService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import VideoPlayer from '../components/VideoPlayer';
+import CinematicVideoPlayer from '../components/CinematicVideoPlayer';
 import SubscriptionRequired from '../components/SubscriptionRequired';
 import LoginRequired from '../components/LoginRequired';
+import CinematicBackground from '../components/CinematicBackground';
 
 const MovieDetails = () => {
   const { id } = useParams();
@@ -120,59 +121,119 @@ const MovieDetails = () => {
   }
 
   return (
-    <div className="movie-details">
-      {showLoginModal && (
-        <LoginRequired
-          onClose={() => setShowLoginModal(false)}
-          message="You need to log in to view movie details and stream content."
-        />
-      )}
-      {showSubscriptionModal && (
-        <SubscriptionRequired onClose={() => setShowSubscriptionModal(false)} />
-      )}
-      <div className="movie-details-card">
-        {isPlaying ? (
-          <div className="movie-video-wrapper">
-            <VideoPlayer
-              videoUrl={
-                // Use streaming URL if available and transcoded, otherwise use original video
-                (transcodingStatus?.is_transcoded && transcodingStatus?.streaming_url)
-                  ? transcodingStatus.streaming_url
-                  : movie.video_url
-              }
-              posterUrl={movie.poster_url}
-              title={movie.title}
-            />
-
-            {/* Show transcoding status if video is being processed */}
-            {movie.video_url && transcodingStatus && transcodingStatus.transcoding_status === "PROCESSING" && (
-              <div className="transcoding-status">
-                <p>This video is being optimized for streaming. You can watch the original version now, or wait for the high-quality streaming version.</p>
-                <div className="transcoding-progress">Processing...</div>
-              </div>
-            )}
-
-            {/* Show error if transcoding failed */}
-            {movie.video_url && transcodingStatus && transcodingStatus.transcoding_status === "ERROR" && (
-              <div className="transcoding-error">
-                <p>There was an issue optimizing this video for streaming. You can still watch the original version.</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="movie-poster-container">
-            {movie.poster_url ? (
-              <img
-                src={movie.poster_url}
-                alt={movie.title}
-                className="movie-poster-large"
+    <>
+      <CinematicBackground opacity="medium" />
+      <div className="movie-details">
+        {showLoginModal && (
+          <LoginRequired
+            onClose={() => setShowLoginModal(false)}
+            message="You need to log in to view movie details and stream content."
+          />
+        )}
+        {showSubscriptionModal && (
+          <SubscriptionRequired onClose={() => setShowSubscriptionModal(false)} />
+        )}
+        <div className="movie-details-card">
+          {isPlaying ? (
+            <div className="movie-video-wrapper">
+              <CinematicVideoPlayer
+                videoUrl={
+                  // Use streaming URL if available and transcoded, otherwise use original video
+                  (transcodingStatus?.is_transcoded && transcodingStatus?.streaming_url)
+                    ? transcodingStatus.streaming_url
+                    : movie.video_url
+                }
+                posterUrl={movie.poster_url}
+                title={movie.title}
               />
-            ) : (
-              <div className="movie-poster-placeholder-large">
-                <span>No Image Available</span>
+
+              {/* Show transcoding status if video is being processed */}
+              {movie.video_url && transcodingStatus && transcodingStatus.transcoding_status === "PROCESSING" && (
+                <div className="transcoding-status">
+                  <p>This video is being optimized for streaming. You can watch the original version now, or wait for the high-quality streaming version.</p>
+                  <div className="transcoding-progress">Processing...</div>
+                </div>
+              )}
+
+              {/* Show error if transcoding failed */}
+              {movie.video_url && transcodingStatus && transcodingStatus.transcoding_status === "ERROR" && (
+                <div className="transcoding-error">
+                  <p>There was an issue optimizing this video for streaming. You can still watch the original version.</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="movie-poster-container">
+              {movie.poster_url ? (
+                <img
+                  src={movie.poster_url}
+                  alt={movie.title}
+                  className="movie-poster-large"
+                />
+              ) : (
+                <div className="movie-poster-placeholder-large">
+                  <span>No Image Available</span>
+                </div>
+              )}
+              <div className="play-button-overlay">
+                <button
+                  onClick={() => {
+                    if (!currentUser) {
+                      setShowLoginModal(true);
+                    } else if (hasAccess) {
+                      setIsPlaying(true);
+                    } else {
+                      setShowSubscriptionModal(true);
+                    }
+                  }}
+                  className="play-button"
+                  disabled={!movie.video_url}
+                >
+                  <svg width="48" height="48" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                  </svg>
+                </button>
               </div>
-            )}
-            <div className="play-button-overlay">
+            </div>
+          )}
+
+          <div className="movie-details-content">
+            <div className="movie-header">
+              <h1>{movie.title}</h1>
+              <div className="movie-meta-info">
+                <div className="movie-rating">
+                  {movie.rating.toFixed(1)}
+                </div>
+                <span className="movie-year-duration">
+                  {movie.release_year} • {movie.duration} min
+                </span>
+              </div>
+            </div>
+
+            <div className="movie-info-section">
+              <div className="movie-genres">
+                <span className="genre-tag">
+                  {movie.genre}
+                </span>
+              </div>
+
+              <p className="movie-description">
+                {movie.description}
+              </p>
+
+              <div className="movie-credits">
+                <div className="credit-item">
+                  <h3>Director</h3>
+                  <p>{movie.director}</p>
+                </div>
+                <div className="credit-item">
+                  <h3>Cast</h3>
+                  <p>{movie.cast}</p>
+                </div>
+              </div>
+            </div>
+
+            {!isPlaying && (
               <button
                 onClick={() => {
                   if (!currentUser) {
@@ -183,72 +244,16 @@ const MovieDetails = () => {
                     setShowSubscriptionModal(true);
                   }
                 }}
-                className="play-button"
+                className="cinematic-profile-button"
                 disabled={!movie.video_url}
               >
-                <svg width="48" height="48" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                </svg>
+                {!currentUser ? "Login to Watch" : hasAccess ? "Watch Now" : "Subscribe to Watch"}
               </button>
-            </div>
+            )}
           </div>
-        )}
-
-        <div className="movie-details-content">
-          <div className="movie-header">
-            <h1>{movie.title}</h1>
-            <div className="movie-meta-info">
-              <div className="movie-rating">
-                {movie.rating.toFixed(1)}
-              </div>
-              <span className="movie-year-duration">
-                {movie.release_year} • {movie.duration} min
-              </span>
-            </div>
-          </div>
-
-          <div className="movie-info-section">
-            <div className="movie-genres">
-              <span className="genre-tag">
-                {movie.genre}
-              </span>
-            </div>
-
-            <p className="movie-description">
-              {movie.description}
-            </p>
-
-            <div className="movie-credits">
-              <div className="credit-item">
-                <h3>Director</h3>
-                <p>{movie.director}</p>
-              </div>
-              <div className="credit-item">
-                <h3>Cast</h3>
-                <p>{movie.cast}</p>
-              </div>
-            </div>
-          </div>
-
-          {!isPlaying && (
-            <button
-              onClick={() => {
-                if (!currentUser) {
-                  setShowLoginModal(true);
-                } else if (hasAccess) {
-                  setIsPlaying(true);
-                } else {
-                  setShowSubscriptionModal(true);
-                }
-              }}
-              className="btn-primary"
-            >
-              {!currentUser ? "Login to Watch" : hasAccess ? "Watch Now" : "Subscribe to Watch"}
-            </button>
-          )}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

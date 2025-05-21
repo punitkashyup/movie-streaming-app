@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import '../styles/movie-card.css';
 
 const MovieCard = ({ movie }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
   // For demo purposes, create a mock movie object if movie is undefined
   const mockMovie = {
     id: Math.floor(Math.random() * 1000),
@@ -14,29 +18,68 @@ const MovieCard = ({ movie }) => {
   const movieData = movie || mockMovie;
 
   return (
-    <div className="card">
-      <Link to={`/movie/${movieData.id}`}>
-        {movieData.poster_url ? (
-          <img
-            src={movieData.poster_url}
-            alt={movieData.title}
-            className="movie-poster"
-          />
-        ) : (
-          <div className="movie-poster-placeholder">
-            <span>No Image</span>
+    <div
+      className={`movie-card ${isHovered ? 'hovered' : ''}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <Link to={`/movie/${movieData.id}`} className="movie-card-link">
+        <div className="movie-card-poster-container">
+          {movieData.poster_url ? (
+            <img
+              src={movieData.poster_url}
+              alt={movieData.title}
+              className="movie-card-poster"
+              loading="lazy"
+            />
+          ) : (
+            <div className="movie-card-poster-placeholder">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                <line x1="7" y1="2" x2="7" y2="22"></line>
+                <line x1="17" y1="2" x2="17" y2="22"></line>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <line x1="2" y1="7" x2="7" y2="7"></line>
+                <line x1="2" y1="17" x2="7" y2="17"></line>
+                <line x1="17" y1="17" x2="22" y2="17"></line>
+                <line x1="17" y1="7" x2="22" y2="7"></line>
+              </svg>
+              <span>No Image</span>
+            </div>
+          )}
+
+          <div className="movie-card-overlay">
+            <div className="movie-card-play-button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" fill="rgba(59, 130, 246, 0.8)" stroke="none"></circle>
+                <polygon points="10 8 16 12 10 16 10 8" fill="white" stroke="white"></polygon>
+              </svg>
+            </div>
           </div>
-        )}
-        <div className="movie-info">
-          <h3>{movieData.title}</h3>
-          <p className="movie-meta">
+        </div>
+
+        <div className="movie-card-content">
+          <h3 className="movie-card-title">{movieData.title}</h3>
+          <p className="movie-card-meta">
             {movieData.release_year} • {movieData.genre}
           </p>
-          <div className="movie-rating">
-            <svg width="16" height="16" fill="#FFD700" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-            </svg>
-            <span>{movieData.rating.toFixed(1)}</span>
+          <div className="movie-card-rating">
+            <div className="movie-card-rating-stars">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <svg
+                  key={star}
+                  width="12"
+                  height="12"
+                  fill={star <= Math.round(movieData.rating / 2) ? "currentColor" : "none"}
+                  stroke="currentColor"
+                  strokeWidth="1"
+                  viewBox="0 0 24 24"
+                >
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              ))}
+            </div>
+            <span className="movie-card-rating-number">{movieData.rating.toFixed(1)}</span>
           </div>
         </div>
       </Link>

@@ -58,7 +58,8 @@
 .plan-price {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #3b82f6;
+  color: #f3f4f6;
+  text-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
 }
 
 .plan-features {
@@ -110,7 +111,8 @@
 .total-amount {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #3b82f6;
+  color: #f3f4f6;
+  text-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
 }
 
 .payment-actions {

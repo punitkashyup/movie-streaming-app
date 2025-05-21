@@ -1,0 +1,277 @@
+/* Cinematic Profile Page Styles */
+.cinematic-profile-container {
+  position: relative;
+  z-index: 1;
+  padding: 2rem 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.cinematic-profile-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.cinematic-profile-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+
+.cinematic-profile-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .cinematic-profile-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.cinematic-profile-card {
+  background-color: rgba(31, 41, 55, 0.8);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cinematic-profile-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4);
+}
+
+.cinematic-profile-card-header {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #8b5cf6 100%);
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.cinematic-profile-card-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.1;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+.cinematic-profile-card-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #f3f4f6;
+  margin: 0;
+  position: relative;
+}
+
+.cinematic-profile-card-body {
+  padding: 1.5rem;
+}
+
+.cinematic-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.cinematic-profile-input-group {
+  position: relative;
+}
+
+.cinematic-profile-input-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #f3f4f6;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.cinematic-profile-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: rgba(17, 24, 39, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  color: #f3f4f6;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.cinematic-profile-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.cinematic-profile-input:hover:not(:focus) {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.cinematic-profile-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.cinematic-profile-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: all 0.6s ease;
+}
+
+.cinematic-profile-button:hover::before {
+  left: 100%;
+}
+
+.cinematic-profile-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+}
+
+.cinematic-profile-button:active {
+  transform: translateY(0);
+}
+
+.cinematic-profile-button:disabled {
+  background: #4b5563;
+  cursor: not-allowed;
+}
+
+.cinematic-profile-alert {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.cinematic-profile-alert-error {
+  background-color: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.cinematic-profile-alert-success {
+  background-color: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+.cinematic-profile-alert-icon {
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* Payment History Section */
+.cinematic-payment-history {
+  margin-top: 2rem;
+}
+
+.cinematic-payment-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.cinematic-payment-table th {
+  background-color: rgba(31, 41, 55, 0.8);
+  color: #f3f4f6;
+  font-weight: 600;
+  text-align: left;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cinematic-payment-table td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #d1d5db;
+}
+
+.cinematic-payment-table tr:last-child td {
+  border-bottom: none;
+}
+
+.cinematic-payment-table tr {
+  background-color: rgba(31, 41, 55, 0.6);
+  transition: background-color 0.2s ease;
+}
+
+.cinematic-payment-table tr:hover {
+  background-color: rgba(31, 41, 55, 0.9);
+}
+
+/* Account Actions Section */
+.cinematic-account-actions {
+  margin-top: 2rem;
+}
+
+.cinematic-account-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .cinematic-account-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.cinematic-danger-button {
+  background: linear-gradient(90deg, #ef4444, #b91c1c);
+}
+
+.cinematic-secondary-button {
+  background: linear-gradient(90deg, #4b5563, #1f2937);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 640px) {
+  .cinematic-profile-title {
+    font-size: 2rem;
+  }
+  
+  .cinematic-profile-card-header,
+  .cinematic-profile-card-body {
+    padding: 1.25rem;
+  }
+}

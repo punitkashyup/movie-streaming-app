@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { subscriptionService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { formatIndianRupees } from '../utils/dateUtils';
+import CinematicBackground from '../components/CinematicBackground';
 import '../styles/subscription.css';
 
 const SubscriptionPlans = () => {
@@ -86,6 +87,7 @@ const SubscriptionPlans = () => {
 
   return (
     <div className="subscription-plans-container">
+      <CinematicBackground opacity="medium" />
       <h1>Choose Your Subscription Plan</h1>
 
       {error && <div className="error-message">{error}</div>}

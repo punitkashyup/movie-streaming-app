@@ -1,6 +1,4 @@
 import os
-from typing import List
-from pydantic import AnyHttpUrl, EmailStr, field_validator
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 
@@ -10,9 +8,6 @@ class Settings(BaseSettings):
     # API settings
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Movie Streaming API"
-
-    # CORS settings
-    CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]
 
     # JWT settings
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-for-development")
@@ -49,10 +44,6 @@ class Settings(BaseSettings):
     PAYMENT_SUCCESS_URL: str = os.getenv("PAYMENT_SUCCESS_URL", "http://localhost:5173/payment/success")
     PAYMENT_FAILURE_URL: str = os.getenv("PAYMENT_FAILURE_URL", "http://localhost:5173/payment/failure")
 
-    @field_validator("CORS_ORIGINS")
-    def assemble_cors_origins(cls, v):
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        return v
+
 
 settings = Settings()

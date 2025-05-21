@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { ToastContainer } from 'react-toastify'
 import { AuthProvider } from './contexts/AuthContext'
-import Navbar from './components/Navbar'
-import Footer from './components/Footer'
+import { ToastProvider } from './contexts/ToastContext'
+import MainNavbar from './components/MainNavbar'
+import CinematicFooter from './components/CinematicFooter'
+import CinematicBackground from './components/CinematicBackground'
 import Home from './pages/Home'
 import Browse from './pages/Browse'
 import MovieDetails from './pages/MovieDetails'
@@ -23,25 +26,42 @@ import AdminSubscriptionPlans from './pages/AdminSubscriptionPlans'
 import AdminUsers from './pages/AdminUsers'
 import AdminPayments from './pages/AdminPayments'
 import MovieForm from './pages/MovieForm'
+
+// Import CSS
 import './index.css'
 import './App.css'
 import './styles/admin.css'
+import './styles/buttons.css'
+import './styles/table.css'
+import './styles/admin-dashboard.css'
+import './styles/toast.css'
+import './styles/browse.css'
+import './styles/movie-card.css'
+import './styles/home-skeleton.css'
+import './styles/auth.css'
+import './styles/cinematic.css'
+import './styles/cinematic-profile.css'
+import './styles/cinematic-player.css'
+import './styles/cinematic-admin.css'
+import 'react-toastify/dist/ReactToastify.css'
 
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div>
-          <Navbar />
-          <main>
-            <div className="container">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/browse" element={<Browse />} />
-                <Route path="/movie/:id" element={<MovieDetails />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/subscriptions" element={<SubscriptionPlans />} />
+      <ToastProvider>
+        <Router>
+          <div>
+            <MainNavbar />
+            <CinematicBackground opacity="low" />
+            <main className="cinematic-content">
+              <div className="container">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/browse" element={<Browse />} />
+                  <Route path="/movie/:id" element={<MovieDetails />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/subscriptions" element={<SubscriptionPlans />} />
                 <Route
                   path="/payment/:planId"
                   element={
@@ -130,9 +150,11 @@ function App() {
               </Routes>
             </div>
           </main>
-          <Footer />
+          <CinematicFooter />
+          <ToastContainer />
         </div>
       </Router>
+      </ToastProvider>
     </AuthProvider>
   )
 }
